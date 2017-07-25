@@ -18,6 +18,31 @@
 #define _____ KC_TRNS
 #define XXXXX KC_NO
 
+enum planck_keycodes {
+    QWERTY = SAFE_RANGE,
+    COLEMAK,
+    DVORAK,
+    PLOVER,
+    LOWER,
+    RAISE,
+    BACKLIT,
+    EXT_PLV,
+    DYNAMIC_MACRO_RANGE,
+};
+
+// this is called when dynamic macro buffer is full
+void backlight_toggle(void) {
+    // INSERT CODE HERE: for example, call function to turn on indicator LED.
+}
+
+#include "dynamic_macro.h"
+
+#define DRS1 DYN_REC_START1
+#define DRS2 DYN_REC_START2
+#define DMP1 DYN_MACRO_PLAY1
+#define DMP2 DYN_MACRO_PLAY2
+#define DRS DYN_REC_STOP
+
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {    /* Keymap 0: Default Layer
      * ,-----------------------------------------------------------.
      * |Esc|  1|  2|  3|  4|  5|  6|  7|  8|  9|  0|  -|  =| Bksp  |
@@ -57,21 +82,21 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {    /* Keymap 0: D
         _____,      _____,     _____,       _____,      _____,  _____,   _____,     KC_PGDN,    KC_MUTE,    KC_VOLD,    KC_VOLU,    _____,                  _____,      _____,  \
         _____,      _____,     _____,                           _____,                                                              _____,      _____,      _____,      _____   ),
     /* Keymap 2: Mouse Keys Layer
-     * ,-----------------------------------------------------------.
-     * |   |   |   |   |   |   |   |   |   |   |   |   |   |       |
-     * |-----------------------------------------------------------|
-     * |     |   |   |   |   |   |   |MWU|MWD|   |   |   |   |     |
-     * |-----------------------------------------------------------|
-     * |      |   |   |   |   |   |MLt|MDn|MUp|MRt|   |   |        |
-     * |-----------------------------------------------------------|
-     * |        |   |   |   |   |SPC|Ms1|Ms2|Ms3|   |   |          |
-     * |-----------------------------------------------------------|
-     * |    |    |    |                        |    |    |    |    |
-     * `-----------------------------------------------------------'
+     * ,---------------------------------------------------------------.
+     * |   |    |    |    |    |   |   |   |   |   |   |   |   |       |
+     * |---------------------------------------------------------------|
+     * |     |DRS1|DRS2|DRS|DMP1|DMP2|   |MWU|MWD|   |   |   |   |     |
+     * |---------------------------------------------------------------|
+     * |      |    |    |    |    |   |MLt|MDn|MUp|MRt|   |   |        |
+     * |---------------------------------------------------------------|
+     * |        |    |    |     |   |SPC|Ms1|Ms2|Ms3|   |   |          |
+     * |---------------------------------------------------------------|
+     * |     |     |     |                         |    |    |    |    |
+     * `---------------------------------------------------------------'
      */
     [2] = KEYMAP(
         _____,   _____,   _____,   _____,   _____,   _____,   _____,        _____,          _____,      _____,          _____,      _____,      _____,      _____,      _____,  \
-        _____,   _____,   _____,   _____,   _____,   _____,   _____,        KC_MS_BTN1,     KC_MS_UP,   KC_MS_BTN2,     KC_MS_BTN3, _____,      _____,                  _____,  \
+        _____,   DRS1,    DRS2,    DRS,     DMP1,    DMP2,    _____,        KC_MS_BTN1,     KC_MS_UP,   KC_MS_BTN2,     KC_MS_BTN3, _____,      _____,                  _____,  \
         _____,   _____,   _____,   _____,   _____,   _____,   KC_MS_WH_UP,  KC_MS_LEFT,     KC_MS_DOWN, KC_MS_RIGHT,    _____,      _____,                              _____,  \
         _____,   _____,   _____,   _____,   _____,   _____,   _____,        KC_MS_WH_DOWN,  _____,      _____,          _____,      _____,                  _____,      _____,  \
         _____,   _____,   _____,                              _____,                                                                _____,      _____,      _____,      _____   )
@@ -83,7 +108,7 @@ const uint16_t PROGMEM fn_actions[] = {
 
 const macro_t *action_get_macro(keyrecord_t *record, uint8_t id, uint8_t opt)
 {
-  // MACRODOWN only works in this function
+    // MACRODOWN only works in this function
       switch(id) {
         case 0:
           if (record->event.pressed) {
@@ -106,7 +131,11 @@ void matrix_scan_user(void) {
 }
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-  return true;
+    if (!process_record_dynamic_macro(keycode, record)) {
+        return false;
+    }
+
+    return true;
 }
 
 void led_set_user(uint8_t usb_led) {
